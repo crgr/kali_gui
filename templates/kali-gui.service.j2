@@ -1,0 +1,15 @@
+[Unit]
+Description=Headless Sway + wayvnc + noVNC for Kali GUI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ kali_gui_user }}
+WorkingDirectory=/home/{{ kali_gui_user }}
+ExecStart=/usr/local/bin/kali-gui.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+set $mod Mod4
+set $term wezterm
+set $menu wofi --show drun
+
+# Basic
+font pango:monospace 10
+floating_modifier $mod
+
+# Launchers
+bindsym $mod+Return exec $term
+bindsym $mod+d exec $menu
+bindsym $mod+Shift+e exec "swaymsg exit"
+
+# Browser
+bindsym $mod+b exec google-chrome-stable
+
+# Bar
+exec_always waybar
+
+# Sensible defaults
+focus_follows_mouse no
+mouse_warping none

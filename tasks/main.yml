@@ -1,0 +1,112 @@
+---
+- name: Install GUI + VNC packages (with Xwayland)
+  ansible.builtin.apt:
+    name:
+      - sway
+      - waybar
+      - wofi
+      - wayvnc
+      - novnc
+      - websockify
+      - dbus-user-session
+      - xdg-user-dirs
+      - ca-certificates
+      - fonts-dejavu-core
+      - wezterm
+      - xwayland
+    state: present
+    update_cache: true
+  when: kali_install_xwayland | bool
+
+- name: Install GUI + VNC packages (without Xwayland)
+  ansible.builtin.apt:
+    name:
+      - sway
+      - waybar
+      - wofi
+      - wayvnc
+      - novnc
+      - websockify
+      - dbus-user-session
+      - xdg-user-dirs
+      - ca-certificates
+      - fonts-dejavu-core
+      - wezterm
+    state: present
+    update_cache: true
+  when: not (kali_install_xwayland | bool)
+
+- name: Install Google Chrome (optional)
+  ansible.builtin.import_tasks: chrome.yml
+  when: kali_install_chrome | bool
+
+- name: Ensure config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ kali_gui_user }}"
+    group: "{{ kali_gui_user }}"
+    mode: "0755"
+  loop:
+    - "/home/{{ kali_gui_user }}/.config"
+    - "/home/{{ kali_gui_user }}/.config/sway"
+    - "/home/{{ kali_gui_user }}/.config/waybar"
+    - "/home/{{ kali_gui_user }}/.config/wofi"
+    - "/home/{{ kali_gui_user }}/.config/wayvnc"
+
+- name: Deploy Sway config
+  ansible.builtin.template:
+    src: sway-config.j2
+    dest: "/home/{{ kali_gui_user }}/.config/sway/config"
+    owner: "{{ kali_gui_user }}"
+    group: "{{ kali_gui_user }}"
+    mode: "0644"
+
+- name: Deploy Waybar config
+  ansible.builtin.template:
+    src: waybar-config.j2
+    dest: "/home/{{ kali_gui_user }}/.config/waybar/config"
+    owner: "{{ kali_gui_user }}"
+    group: "{{ kali_gui_user }}"
+    mode: "0644"
+
+- name: Deploy Wofi config
+  ansible.builtin.template:
+    src: wofi-config.j2
+    dest: "/home/{{ kali_gui_user }}/.config/wofi/config"
+    owner: "{{ kali_gui_user }}"
+    group: "{{ kali_gui_user }}"
+    mode: "0644"
+
+- name: Deploy wayvnc config (PAM auth)
+  ansible.builtin.template:
+    src: wayvnc-config.j2
+    dest: "/home/{{ kali_gui_user }}/.config/wayvnc/config"
+    owner: "{{ kali_gui_user }}"
+    group: "{{ kali_gui_user }}"
+    mode: "0600"
+
+- name: Deploy GUI launcher script
+  ansible.builtin.template:
+    src: kali-gui.sh.j2
+    dest: "/usr/local/bin/kali-gui.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy systemd service
+  ansible.builtin.template:
+    src: kali-gui.service.j2
+    dest: "/etc/systemd/system/kali-gui.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart kali-gui
+
+- name: Enable and start kali-gui
+  ansible.builtin.systemd:
+    name: kali-gui.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: kali_gui_enable_service | bool

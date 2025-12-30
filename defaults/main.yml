@@ -1,0 +1,25 @@
+---
+kali_gui_user: "kali"
+
+# Bind to the VM IP that Ansible connects to (Ludus provides this via inventory).
+kali_gui_bind_ip: "{{ ansible_host | default(ansible_default_ipv4.address) }}"
+
+kali_vnc_listen: "{{ kali_gui_bind_ip }}"
+kali_vnc_port: 5900
+
+kali_novnc_listen: "{{ kali_gui_bind_ip }}"
+kali_novnc_port: 6080
+
+kali_wayland_display: "wayland-1"
+kali_wlr_allow_software: true
+
+kali_wayvnc_enable_auth: true
+kali_wayvnc_enable_pam: true
+
+kali_install_chrome: true
+kali_install_xwayland: true
+
+kali_novnc_proxy: "/usr/share/novnc/utils/novnc_proxy"
+kali_novnc_webroot: "/usr/share/novnc"
+
+kali_gui_enable_service: true

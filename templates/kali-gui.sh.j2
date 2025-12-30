@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export WAYLAND_DISPLAY="{{ kali_wayland_display }}"
+export WLR_BACKENDS=headless
+export WLR_LIBINPUT_NO_DEVICES=1
+
+{% if kali_wlr_allow_software | bool %}
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+{% endif %}
+
+exec dbus-run-session -- bash -lc '
+  set -euo pipefail
+
+  sway >/tmp/sway.log 2>&1 &
+  SWAY_PID=$!
+
+  for i in $(seq 1 100); do
+    [ -S "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ] && break
+    sleep 0.1
+  done
+
+  # wayvnc reads ~/.config/wayvnc/config (PAM auth, etc.)
+  wayvnc {{ kali_vnc_listen }} {{ kali_vnc_port }} >/tmp/wayvnc.log 2>&1 &
+  VNC_PID=$!
+
+  # Browser endpoint: http://<wg-ip>:{{ kali_novnc_port }}/vnc.html
+  "{{ kali_novnc_proxy }}" --listen {{ kali_novnc_listen }}:{{ kali_novnc_port }} --vnc 127.0.0.1:{{ kali_vnc_port }} >/tmp/novnc.log 2>&1 &
+  NOVNC_PID=$!
+
+  wait ${SWAY_PID}
+'

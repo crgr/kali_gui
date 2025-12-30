@@ -1,0 +1,6 @@
+---
+- name: Restart kali-gui
+  ansible.builtin.systemd:
+    name: kali-gui.service
+    state: restarted
+    daemon_reload: true

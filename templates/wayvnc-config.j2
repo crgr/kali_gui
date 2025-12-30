@@ -1,0 +1,8 @@
+# ~/.config/wayvnc/config
+
+enable_auth={{ 'true' if kali_wayvnc_enable_auth else 'false' }}
+enable_pam={{ 'true' if kali_wayvnc_enable_pam else 'false' }}
+
+# Leave TLS disabled; traffic is over WireGuard in-range.
+# certificate_file=
+# private_key_file=
