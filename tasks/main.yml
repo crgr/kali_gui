@@ -1,4 +1,7 @@
 ---
+- name: Enable WezTerm APT repository
+  ansible.builtin.import_tasks: wezterm.yml
+
 - name: Install GUI + VNC packages (with Xwayland)
   ansible.builtin.apt:
     name:

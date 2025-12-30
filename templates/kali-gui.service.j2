@@ -7,6 +7,12 @@ Wants=network-online.target
 Type=simple
 User={{ kali_gui_user }}
 WorkingDirectory=/home/{{ kali_gui_user }}
+
+# systemd will create /run/kali-gui owned by {{ kali_gui_user }}
+RuntimeDirectory=kali-gui
+RuntimeDirectoryMode=0700
+Environment=XDG_RUNTIME_DIR=/run/kali-gui
+
 ExecStart=/usr/local/bin/kali-gui.sh
 Restart=on-failure
 RestartSec=2

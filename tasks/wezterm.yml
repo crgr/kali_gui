@@ -1,0 +1,40 @@
+---
+- name: Ensure prerequisites for WezTerm repo (gpg + keyring support)
+  ansible.builtin.apt:
+    name:
+      - gnupg
+      - ca-certificates
+    state: present
+    update_cache: true
+
+- name: Download WezTerm repo key
+  ansible.builtin.get_url:
+    url: "https://apt.fury.io/wez/gpg.key"
+    dest: /tmp/wezterm-fury.key
+    mode: "0644"
+
+- name: Install WezTerm keyring
+  ansible.builtin.command:
+    cmd: "gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg /tmp/wezterm-fury.key"
+  args:
+    creates: /usr/share/keyrings/wezterm-fury.gpg
+
+- name: Ensure keyring permissions
+  ansible.builtin.file:
+    path: /usr/share/keyrings/wezterm-fury.gpg
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: Add WezTerm APT repo
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/wezterm.list
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *
+
+- name: Update apt cache after adding WezTerm repo
+  ansible.builtin.apt:
+    update_cache: true

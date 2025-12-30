@@ -5,6 +5,10 @@ export WAYLAND_DISPLAY="{{ kali_wayland_display }}"
 export WLR_BACKENDS=headless
 export WLR_LIBINPUT_NO_DEVICES=1
 
+: "${XDG_RUNTIME_DIR:=/run/kali-gui}"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR" || true
+
 {% if kali_wlr_allow_software | bool %}
 export WLR_RENDERER_ALLOW_SOFTWARE=1
 {% endif %}
