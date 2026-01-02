@@ -1,25 +1,26 @@
 ---
-kali_gui_user: "kali"
+# Mandatory GUI components (always installed)
+kali_gui_mandatory_packages:
+  - sway
+  - waybar
+  - wofi
+  - foot
 
-# Bind to the VM IP that Ansible connects to (Ludus provides this via inventory).
-kali_gui_bind_ip: "{{ ansible_host | default(ansible_facts['default_ipv4']['address']) }}"
+# Optional components (user decides)
+kali_install_wayvnc: false
+kali_install_novnc: false
+kali_install_firefox: false
+kali_install_chrome: false
+kali_install_wezterm: false
 
-kali_vnc_listen: "{{ kali_gui_bind_ip }}"
-kali_vnc_port: 5900
-
-kali_novnc_listen: "{{ kali_gui_bind_ip }}"
-kali_novnc_port: 6080
-
-kali_wayland_display: "wayland-1"
-kali_wlr_allow_software: true
-
-kali_wayvnc_enable_auth: true
-kali_wayvnc_enable_pam: true
-
-kali_install_chrome: true
+# Optional: Xwayland (needed for X11-only apps like Burp/Swing)
 kali_install_xwayland: false
 
-kali_novnc_proxy: "/usr/share/novnc/utils/novnc_proxy"
-kali_novnc_webroot: "/usr/share/novnc"
+# Service behavior
+kali_gui_autostart: false
+kali_gui_user: "kali"
 
-kali_gui_enable_service: true
+# Network binding/ports (defaults are sane for “in-range” direct access)
+kali_gui_bind_ip: "0.0.0.0"
+kali_gui_vnc_port: 5900
+kali_gui_novnc_port: 6080

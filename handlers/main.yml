@@ -1,6 +1,10 @@
 ---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
 - name: Restart kali-gui
   ansible.builtin.systemd:
     name: kali-gui.service
     state: restarted
-    daemon_reload: true
+  when: kali_install_wayvnc | bool

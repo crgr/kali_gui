@@ -1,5 +1,5 @@
 [Unit]
-Description=Headless Sway + wayvnc + noVNC for Kali GUI
+Description=Headless Sway + wayvnc{% if kali_install_novnc | bool %} + noVNC{% endif %} for Kali GUI
 After=network-online.target
 Wants=network-online.target
 
@@ -8,7 +8,6 @@ Type=simple
 User={{ kali_gui_user }}
 WorkingDirectory=/home/{{ kali_gui_user }}
 
-# systemd will create /run/kali-gui owned by {{ kali_gui_user }}
 RuntimeDirectory=kali-gui
 RuntimeDirectoryMode=0700
 Environment=XDG_RUNTIME_DIR=/run/kali-gui

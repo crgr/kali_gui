@@ -1,115 +1,201 @@
 ---
-- name: Enable WezTerm APT repository
-  ansible.builtin.import_tasks: wezterm.yml
-
-- name: Install GUI + VNC packages (with Xwayland)
+- name: Install mandatory GUI packages (Sway + Waybar + Wofi + foot)
   ansible.builtin.apt:
-    name:
-      - sway
-      - waybar
-      - wofi
-      - wayvnc
-      - novnc
-      - websockify
-      - dbus-user-session
-      - xdg-user-dirs
-      - ca-certificates
-      - fonts-dejavu-core
-      - wezterm
-      - xwayland
+    name: "{{ kali_gui_mandatory_packages }}"
     state: present
     update_cache: true
+    install_recommends: false
+
+- name: Install optional Xwayland
+  ansible.builtin.apt:
+    name: xwayland
+    state: present
+    install_recommends: false
   when: kali_install_xwayland | bool
 
-- name: Install GUI + VNC packages (without Xwayland)
+- name: Install optional WayVNC
+  ansible.builtin.apt:
+    name: wayvnc
+    state: present
+    install_recommends: false
+  when: kali_install_wayvnc | bool
+
+- name: Install optional noVNC + websockify
   ansible.builtin.apt:
     name:
-      - sway
-      - waybar
-      - wofi
-      - wayvnc
       - novnc
       - websockify
-      - dbus-user-session
-      - xdg-user-dirs
-      - ca-certificates
-      - fonts-dejavu-core
-      - wezterm
     state: present
-    update_cache: true
-  when: not (kali_install_xwayland | bool)
+    install_recommends: false
+  when: kali_install_novnc | bool
 
-- name: Install Google Chrome (optional)
-  ansible.builtin.import_tasks: chrome.yml
+- name: Install optional Firefox ESR
+  ansible.builtin.apt:
+    name: firefox-esr
+    state: present
+    install_recommends: false
+  when: kali_install_firefox | bool
+
+# Optional: Google Chrome (external repo)
+- name: Install prerequisites for external APT repositories (Chrome/WezTerm)
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    install_recommends: false
+  when: (kali_install_chrome | bool) or (kali_install_wezterm | bool)
+
+- name: Download Google Linux signing key (ASCII)
+  ansible.builtin.get_url:
+    url: "https://dl.google.com/linux/linux_signing_key.pub"
+    dest: "/usr/share/keyrings/google-linux-signing-key.asc"
+    mode: "0644"
   when: kali_install_chrome | bool
 
-- name: Ensure config directories exist
+- name: Dearmor Google signing key
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /usr/share/keyrings/google-linux-signing-key.gpg /usr/share/keyrings/google-linux-signing-key.asc"
+    creates: "/usr/share/keyrings/google-linux-signing-key.gpg"
+  when: kali_install_chrome | bool
+
+- name: Add Google Chrome APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] https://dl.google.com/linux/chrome/deb/ stable main"
+    filename: "google-chrome"
+    state: present
+  when: kali_install_chrome | bool
+
+- name: Install Google Chrome
+  ansible.builtin.apt:
+    name: google-chrome-stable
+    state: present
+    update_cache: true
+    install_recommends: false
+  when: kali_install_chrome | bool
+
+# Optional: WezTerm (APT Fury)
+- name: Download WezTerm signing key (ASCII)
+  ansible.builtin.get_url:
+    url: "https://apt.fury.io/wez/gpg.key"
+    dest: "/usr/share/keyrings/wezterm-fury.asc"
+    mode: "0644"
+  when: kali_install_wezterm | bool
+
+- name: Dearmor WezTerm signing key
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o /usr/share/keyrings/wezterm-fury.gpg /usr/share/keyrings/wezterm-fury.asc"
+    creates: "/usr/share/keyrings/wezterm-fury.gpg"
+  when: kali_install_wezterm | bool
+
+- name: Add WezTerm APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *"
+    filename: "wezterm"
+    state: present
+  when: kali_install_wezterm | bool
+
+- name: Install WezTerm
+  ansible.builtin.apt:
+    name: wezterm
+    state: present
+    update_cache: true
+    install_recommends: false
+  when: kali_install_wezterm | bool
+
+# Static user configuration (copied as-is from files/)
+- name: Ensure user config directories exist
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/home/{{ kali_gui_user }}/.config/{{ item }}"
     state: directory
     owner: "{{ kali_gui_user }}"
     group: "{{ kali_gui_user }}"
     mode: "0755"
   loop:
-    - "/home/{{ kali_gui_user }}/.config"
-    - "/home/{{ kali_gui_user }}/.config/sway"
-    - "/home/{{ kali_gui_user }}/.config/waybar"
-    - "/home/{{ kali_gui_user }}/.config/wofi"
-    - "/home/{{ kali_gui_user }}/.config/wayvnc"
+    - sway
+    - waybar
+    - wofi
 
 - name: Deploy Sway config
-  ansible.builtin.template:
-    src: sway-config.j2
+  ansible.builtin.copy:
+    src: "sway/config"
     dest: "/home/{{ kali_gui_user }}/.config/sway/config"
     owner: "{{ kali_gui_user }}"
     group: "{{ kali_gui_user }}"
     mode: "0644"
 
 - name: Deploy Waybar config
-  ansible.builtin.template:
-    src: waybar-config.j2
+  ansible.builtin.copy:
+    src: "waybar/config"
     dest: "/home/{{ kali_gui_user }}/.config/waybar/config"
     owner: "{{ kali_gui_user }}"
     group: "{{ kali_gui_user }}"
     mode: "0644"
 
 - name: Deploy Wofi config
-  ansible.builtin.template:
-    src: wofi-config.j2
+  ansible.builtin.copy:
+    src: "wofi/config"
     dest: "/home/{{ kali_gui_user }}/.config/wofi/config"
     owner: "{{ kali_gui_user }}"
     group: "{{ kali_gui_user }}"
     mode: "0644"
 
-- name: Deploy wayvnc config (PAM auth)
+# Headless Sway + wayvnc (+ optional noVNC) systemd service
+# Only deployed when wayvnc is enabled.
+- name: Deploy kali-gui launcher script
   ansible.builtin.template:
-    src: wayvnc-config.j2
-    dest: "/home/{{ kali_gui_user }}/.config/wayvnc/config"
-    owner: "{{ kali_gui_user }}"
-    group: "{{ kali_gui_user }}"
-    mode: "0600"
-
-- name: Deploy GUI launcher script
-  ansible.builtin.template:
-    src: kali-gui.sh.j2
+    src: "kali-gui.sh.j2"
     dest: "/usr/local/bin/kali-gui.sh"
     owner: root
     group: root
     mode: "0755"
+  when: kali_install_wayvnc | bool
+  notify: Restart kali-gui
 
-- name: Deploy systemd service
+- name: Deploy kali-gui systemd service
   ansible.builtin.template:
-    src: kali-gui.service.j2
+    src: "kali-gui.service.j2"
     dest: "/etc/systemd/system/kali-gui.service"
     owner: root
     group: root
     mode: "0644"
-  notify: Restart kali-gui
+  when: kali_install_wayvnc | bool
+  notify: Reload systemd
 
-- name: Enable and start kali-gui
+- name: Enable/start kali-gui if autostart is enabled
   ansible.builtin.systemd:
     name: kali-gui.service
     enabled: true
     state: started
-    daemon_reload: true
-  when: kali_gui_enable_service | bool
+  when:
+    - kali_install_wayvnc | bool
+    - kali_gui_autostart | bool
+
+- name: Ensure kali-gui is disabled/stopped by default (on-demand)
+  ansible.builtin.systemd:
+    name: kali-gui.service
+    enabled: false
+    state: stopped
+  when:
+    - kali_install_wayvnc | bool
+    - not (kali_gui_autostart | bool)
+
+# Cleanup if wayvnc is not enabled (e.g., user toggled it off)
+- name: Stop/disable kali-gui when wayvnc is disabled
+  ansible.builtin.systemd:
+    name: kali-gui.service
+    enabled: false
+    state: stopped
+  when: not (kali_install_wayvnc | bool)
+  ignore_errors: true
+
+- name: Remove kali-gui unit/script when wayvnc is disabled
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/etc/systemd/system/kali-gui.service"
+    - "/usr/local/bin/kali-gui.sh"
+  when: not (kali_install_wayvnc | bool)
+  notify: Reload systemd
