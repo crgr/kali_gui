@@ -36,7 +36,7 @@
     install_recommends: false
   when: kali_install_firefox | bool
 
-# Optional: Google Chrome (external repo)
+# External repositories prerequisites (Chrome / WezTerm)
 - name: Install prerequisites for external APT repositories (Chrome/WezTerm)
   ansible.builtin.apt:
     name:
@@ -47,6 +47,7 @@
     install_recommends: false
   when: (kali_install_chrome | bool) or (kali_install_wezterm | bool)
 
+# Optional: Google Chrome
 - name: Download Google Linux signing key (ASCII)
   ansible.builtin.get_url:
     url: "https://dl.google.com/linux/linux_signing_key.pub"
@@ -104,7 +105,7 @@
     install_recommends: false
   when: kali_install_wezterm | bool
 
-# Static user configuration (copied as-is from files/)
+# Static user configuration from files/
 - name: Ensure user config directories exist
   ansible.builtin.file:
     path: "/home/{{ kali_gui_user }}/.config/{{ item }}"
@@ -161,7 +162,9 @@
     group: root
     mode: "0644"
   when: kali_install_wayvnc | bool
-  notify: Reload systemd
+  notify:
+    - Reload systemd
+    - Restart kali-gui
 
 - name: Enable/start kali-gui if autostart is enabled
   ansible.builtin.systemd:
@@ -181,14 +184,20 @@
     - kali_install_wayvnc | bool
     - not (kali_gui_autostart | bool)
 
-# Cleanup if wayvnc is not enabled (e.g., user toggled it off)
-- name: Stop/disable kali-gui when wayvnc is disabled
+# Cleanup when wayvnc is disabled
+- name: Check if kali-gui systemd unit exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/kali-gui.service
+  register: kali_gui_unit
+
+- name: Stop/disable kali-gui when wayvnc is disabled (only if unit exists)
   ansible.builtin.systemd:
     name: kali-gui.service
     enabled: false
     state: stopped
-  when: not (kali_install_wayvnc | bool)
-  ignore_errors: true
+  when:
+    - not (kali_install_wayvnc | bool)
+    - kali_gui_unit.stat.exists
 
 - name: Remove kali-gui unit/script when wayvnc is disabled
   ansible.builtin.file:
