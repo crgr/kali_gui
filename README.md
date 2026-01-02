@@ -9,8 +9,8 @@ If you want Burp to work, you very likely want: `kali_install_xwayland: true`
 
 Disk space needed:
 
-sway waybar wofi                       Space needed: 339 MB
-sway waybar wofi wayvnc                Space needed: 522 MB
-sway waybar wofi wayvnc novnc          Space needed: 715 MB
-sway waybar wofi wayvnc novnc xwayland Space needed: 727 MB
-sway waybar wofi firefox-esr           Space needed: 620 MB
+sway waybar wofi                       339 MB
+sway waybar wofi wayvnc                522 MB
+sway waybar wofi firefox-esr           620 MB
+sway waybar wofi wayvnc novnc          715 MB
+sway waybar wofi wayvnc novnc xwayland 727 MB

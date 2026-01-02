@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  role_name: kali_gui
+  author: "Cristian Grigoriu"
+  description: "Kali GUI stack (Sway/Waybar/Wofi/foot) with optional wayvnc/noVNC and optional browsers/terminals."
+  license: "MIT"
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+    - name: Kali
+      versions:
+        - all
+
+dependencies: []
